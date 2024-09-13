@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
-import { exec } from "child_process";
-import * as path from "path";
-import hygen from "hygen";
 import { spawn } from "child_process";
+import * as path from "path";
 
 export function activate(context: vscode.ExtensionContext) {
   let disposableAddPage = vscode.commands.registerCommand(
@@ -23,14 +21,12 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function generateCode(type: "page" | "component", uri: vscode.Uri) {
-  // Get the path of the selected directory
   const targetPath = uri.fsPath;
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+  const workspaceRoot = workspaceFolder?.uri.fsPath || "";
 
-  // Get the relative path from the workspace root
-  const workspaceRoot = vscode.workspace.rootPath || "";
   const relativeTargetPath = path.relative(workspaceRoot, targetPath);
 
-  // Prompt the user for the name
   vscode.window
     .showInputBox({ prompt: `Enter the name of the ${type}:` })
     .then((name) => {
@@ -40,7 +36,6 @@ function generateCode(type: "page" | "component", uri: vscode.Uri) {
       }
 
       if (type === "component") {
-        // Prompt for 'hasNested'
         vscode.window
           .showQuickPick(["Yes", "No"], {
             placeHolder: "Will this component have nested files?",
@@ -52,28 +47,30 @@ function generateCode(type: "page" | "component", uri: vscode.Uri) {
 
             const hasNestedFlag = hasNested === "Yes";
 
-            // Run Hygen command
             runHygenCommand(type, name, relativeTargetPath, {
               hasNested: hasNestedFlag,
             });
           });
       } else {
-        // For pages
-        // Run Hygen command
         runHygenCommand(type, name, relativeTargetPath);
       }
     });
 }
+
 function runHygenCommand(
   type: "page" | "component",
   name: string,
   targetPath: string,
-  options: any = {}
+  options: { hasNested?: boolean } = {}
 ) {
-  // Path to the local hygen binary
-  const hygenPath = path.join(__dirname, "..", "node_modules", ".bin", "hygen");
+  const hygenPath = path.join(
+    __dirname,
+    "..",
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "hygen.cmd" : "hygen"
+  );
 
-  // Build the arguments array
   const args = [
     type,
     "new",
@@ -86,14 +83,16 @@ function runHygenCommand(
   ];
 
   if (type === "component" && options.hasNested !== undefined) {
-    args.push("--hasNested", options.hasNested);
+    args.push("--hasNested", options.hasNested ? "true" : "false");
   }
 
-  // Execute hygen as a child process
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const workspaceRoot = workspaceFolders ? workspaceFolders[0].uri.fsPath : "";
+
   const hygenProcess = spawn(hygenPath, args, {
-    cwd: vscode.workspace.rootPath,
+    cwd: workspaceRoot,
     stdio: "inherit",
-    shell: true,
+    shell: process.platform === "win32",
   });
 
   hygenProcess.on("error", (error) => {
@@ -109,29 +108,4 @@ function runHygenCommand(
       vscode.window.showErrorMessage(`Hygen exited with code ${code}`);
     }
   });
-}
-
-function buildHygenCommand(
-  type: "page" | "component",
-  name: string,
-  targetPath: string,
-  options: any
-) {
-  // Escape spaces in paths
-  const escapedTargetPath = targetPath.replace(/(\s+)/g, "\\$1");
-
-  // Relative path from the workspace root
-  const relativeTargetPath = path.relative(
-    vscode.workspace.rootPath || "",
-    escapedTargetPath
-  );
-
-  // Build the command with arguments
-  let cmd = `hygen ${type} new --name "${name}" --routePath "${relativeTargetPath}"`;
-
-  if (type === "component" && options.hasNested !== undefined) {
-    cmd += ` --hasNested ${options.hasNested}`;
-  }
-
-  return cmd;
 }

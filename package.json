@@ -1,4 +1,5 @@
 {
+  "license": "MIT",
   "name": "hygen-component-generator",
   "displayName": "hygen-component-generator",
   "description": "Generate pages and components using Hygen from the VSCode explorer",
@@ -15,40 +16,35 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "contributes": {
-      "commands": [
+    "commands": [
+      {
+        "command": "hygen-code-generator.addPage",
+        "title": "Add Page"
+      },
+      {
+        "command": "hygen-code-generator.addComponent",
+        "title": "Add Component"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
         {
           "command": "hygen-code-generator.addPage",
-          "title": "Add Page"
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@1"
         },
         {
           "command": "hygen-code-generator.addComponent",
-          "title": "Add Component"
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@2"
         }
-      ],
-      "menus": {
-        "explorer/context": [
-          {
-            "when": "resourceFolder",
-            "command": "hygen-code-generator.addPage",
-            "group": "navigation@1"
-          },
-          {
-            "when": "resourceFolder",
-            "command": "hygen-code-generator.addComponent",
-            "group": "navigation@2"
-          }
-        ]
-      }
+      ]
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "prepublish": "npm run build"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
@@ -58,10 +54,15 @@
     "@typescript-eslint/parser": "^8.3.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.23.1",
     "eslint": "^9.9.1",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "hygen": "^6.2.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soooji/hygen-react-component-generator.git"
   }
 }
