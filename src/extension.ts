@@ -63,15 +63,17 @@ function runHygenCommand(
   targetPath: string,
   options: { hasNested?: boolean } = {}
 ) {
+  // Use the path to 'hygen.js' directly from 'hygen' module
   const hygenPath = path.join(
     __dirname,
-    "..",
     "node_modules",
-    ".bin",
-    process.platform === "win32" ? "hygen.cmd" : "hygen"
+    "hygen",
+    "bin",
+    "hygen.js"
   );
 
   const args = [
+    hygenPath,
     type,
     "new",
     "--name",
@@ -79,7 +81,7 @@ function runHygenCommand(
     "--routePath",
     targetPath,
     "--templates",
-    path.join(__dirname, "..", "_templates"),
+    path.join(__dirname, "_templates"),
   ];
 
   if (type === "component" && options.hasNested !== undefined) {
@@ -89,10 +91,9 @@ function runHygenCommand(
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceRoot = workspaceFolders ? workspaceFolders[0].uri.fsPath : "";
 
-  const hygenProcess = spawn(hygenPath, args, {
+  const hygenProcess = spawn(process.execPath, args, {
     cwd: workspaceRoot,
     stdio: "inherit",
-    shell: process.platform === "win32",
   });
 
   hygenProcess.on("error", (error) => {

@@ -1,11 +1,22 @@
-.vscode/**
-.vscode-test/**
+# Exclude all node_modules
+node_modules/**
+
+# Include 'hygen' module
+!node_modules/hygen/**
+
+# Exclude source files and configs not needed at runtime
 src/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/tsconfig.json
-**/eslint.config.mjs
-**/*.map
-**/*.ts
-**/.vscode-test.*
+esbuild.js
+tsconfig.json
+package-lock.json
+
+# Exclude other unnecessary files
+.vscode/**
+README.md
+CHANGELOG.md
+LICENSE
+
+# Include necessary files
+!out/**
+!_templates/**
+!package.json
