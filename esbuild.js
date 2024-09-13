@@ -1,56 +1,38 @@
+// esbuild.js
+
 const esbuild = require("esbuild");
+const path = require("path");
 
-const production = process.argv.includes("--production");
-const watch = process.argv.includes("--watch");
+const isWatch = process.argv.includes("--watch");
 
-async function main() {
-  const ctx = await esbuild.context({
-    entryPoints: ["src/extension.ts"],
-    bundle: true,
-    format: "cjs",
-    minify: production,
-    sourcemap: !production,
-    sourcesContent: false,
-    platform: "node",
-    outfile: "dist/extension.js",
-    external: ["vscode"],
-    logLevel: "silent",
-    plugins: [
-      /* add to the end of plugins array */
-      esbuildProblemMatcherPlugin,
-    ],
-  });
-  if (watch) {
-    await ctx.watch();
-  } else {
-    await ctx.rebuild();
-    await ctx.dispose();
-  }
-}
-
-/**
- * @type {import('esbuild').Plugin}
- */
-const esbuildProblemMatcherPlugin = {
-  name: "esbuild-problem-matcher",
-
-  setup(build) {
-    build.onStart(() => {
-      console.log("[watch] build started");
-    });
-    build.onEnd((result) => {
-      result.errors.forEach(({ text, location }) => {
-        console.error(`✘ [ERROR] ${text}`);
-        console.error(
-          `    ${location.file}:${location.line}:${location.column}:`
-        );
-      });
-      console.log("[watch] build finished");
-    });
+const buildOptions = {
+  entryPoints: ["src/extension.ts"], // Your extension's entry point
+  bundle: true,
+  platform: "node", // Platform should be 'node' for VSCode extensions
+  target: "node14", // Target the node version compatible with VSCode
+  outfile: "out/extension.js", // Output file
+  external: ["vscode", "hygen"], // Exclude the 'vscode' and 'hygen' modules
+  format: "cjs", // CommonJS format
+  sourcemap: true, // Generate source maps
+  loader: {
+    ".ejs.t": "text", // If you have template files, ensure they are loaded as text
   },
 };
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+async function build() {
+  try {
+    if (isWatch) {
+      const ctx = await esbuild.context(buildOptions);
+      await ctx.watch();
+      console.log("Watching for changes...");
+    } else {
+      await esbuild.build(buildOptions);
+      console.log("Build completed.");
+    }
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+build();
